@@ -87,23 +87,34 @@ class Forniture {
 
   pressed() {
     if(this.over) {
-      state = this.name
+      state.current = this.name
     }
   }
 }
 
 /////////// Start state
 class StartButton {
-  display() {
+
+  cosntructor() {
+  }
+
+  create() {
     push()
     let btn = createButton('Start')
     btn.mousePressed(function() {
-      state = States.main
+      state.current = States.main
       getAudioContext().resume()
       streetSound.loop()
     })
     btn.position(cnvx+canvasWidth/2 - 30, cnvy+canvasHeight/2)
+    btn.id('start-btn')
     pop()
+  }
+
+  display() {
+    if (!select('#start-btn')) {
+      this.create()
+    }
   }
 
   pressed() {
@@ -115,11 +126,17 @@ let startButtonRef = new StartButton()
 
 /////////// Sofa state
 class Sofa {
-  display() {
-    push()
+  constructor() {
+  }
 
-    let wrapper = select('#player-size')
-    let player = select('#player-wrapper')
+  create() {
+    let playerSize = createElement('div').id('player-size')
+    let croppingDiv = createElement('div').id('cropping-div')
+    let divToCrop = createElement('div').id('div-to-crop')
+    let player = createElement('div').id('player-wrapper')
+    playerSize.child(croppingDiv)
+    croppingDiv.child(divToCrop)
+    divToCrop.child(player)
     let iframe = createElement('iframe')
     iframe.id('player')
     iframe.attribute('src', 'https://www.youtube.com/embed/eJP9MRr2YWM?&vq=hd1080ptheme=dark&autoplay=1&autohide=2&modestbranding=1&fs=0&showinfo=0&rel=0&iv_load_policy=3')
@@ -128,11 +145,14 @@ class Sofa {
     iframe.attribute('frameborder', '0')
     iframe.attribute('allow', 'autoplay')
     player.child(iframe)
-    wrapper.style('zIndex', '10')
-    wrapper.position(cnvx + canvasWidth/2 - 760/2, cnvy + canvasHeight/2 - 420/2)
-    wrapper.removeAttribute('hidden')
+    playerSize.style('zIndex', '10')
+    playerSize.position(cnvx + canvasWidth/2 - 760/2, cnvy + canvasHeight/2 - 420/2)
+  }
 
-    pop()
+  display() {
+    if (!select('#player')) {
+      this.create()
+    }
   }
 
   pressed() {
@@ -162,7 +182,20 @@ const States = {
   sofa: 'sofa',
 }
 
-let state = States.start
+// let state = States.start
+let state = {
+  state: States.start,
+  set current(value) {
+    this.state = value
+    removeElements()
+  },
+  get current() {
+    return this.state
+  }
+}
+
+
+
 let uiItems = []
 
 let fan, tv, wind, sofa, sofaState
@@ -184,7 +217,7 @@ function setup() {
   sofaState = new Sofa()
   title = new Title()
   closebtn = new Closebtn()
-
+  
   frameRate(60)
   angleMode(DEGREES)
   outputVolume(0.8)
@@ -193,10 +226,10 @@ function setup() {
 function draw() {
   background(255)
   image(frameImg, 0, 0, 800, 457, 0, 0, frameImg.width, frameImg.height, CONTAIN, CENTER)
-  removeElements()
-  uiItems = [title, closebtn]
+  // removeElements()
+  uiItems = [title]
   
-  switch (state) {
+  switch (state.current) {
     case States.start:
       uiItems.push(startButtonRef)
       break
@@ -204,21 +237,35 @@ function draw() {
       uiItems.push(fan, tv, wind, sofa)
       break
     case States.sofa:
-      uiItems.push(sofaState)
+      uiItems.push(closebtn, sofaState)
       break
   }
   uiItems.forEach(function(ele) {
+    push()
     ele.display()
+    pop()
   })
 }
 
 class Title {
-  display() {
+  constructor() {
+    this.create()
+  }
+
+  create() {
     let title = createP("como as coisas não são")
     title.style('font-size', '50px')
     title.style('color', '#8A9085')
     title.style('font-family', 'Karla')
     title.position(cnvx - 120, cnvy - 120)
+    title.id('title')
+  }
+
+  display() {
+    let title = select('#title')
+    if (!title) {
+      this.create() 
+    }
   }
 
   pressed() {
@@ -226,32 +273,24 @@ class Title {
   }
 }
 class Closebtn {
-  constructor() {
-    this.created = false
-    this.closebtnn
-  }
 
   display() {
-    if (state != States.main && state != States.start) {
-      this.closebtnn = createElement('button', 'x')
-      this.closebtnn.attribute('type', 'button')
-      this.closebtnn.removeAttribute('hidden')
-      this.closebtnn.id('close-btn')
-      this.closebtnn.style('zIndex', '11')
-      this.closebtnn.position(cnvx+canvasWidth - 40, cnvy + 25)
-      this.closebtnn.mouseClicked(this.close)
-    } else {
-      if(this.created) {
-        this.closebtnn.attribute('hidden')
-      }
+    if (!select('#close-btn')) {
+      this.create()
     }
+  }
+
+  create() {
+    let btn = createButton('x')
+    btn.attribute('type', 'button')
+    btn.id('close-btn')
+    btn.style('zIndex', '11')
+    btn.position(cnvx+canvasWidth - 40, cnvy + 25)
+    btn.mouseClicked(this.close)
   }
 
   close() {
-    console.log("AOISJDOAISJDOAISD")
-    if (state != States.main && state != States.start) {
-      state = States.main
-    }
+    state.current = States.main
   }
 
   pressed() {
